@@ -42,6 +42,12 @@ class crawler(object):
     This crawler keeps track of font sizes and makes it simpler to manage word
     ids and document ids."""
 
+    docIndex = list() #doc URL indexed by id
+    lexicon = list() #words indexed by id
+    invertedIndex = dict() #lists of doc ids indexed by word id
+
+    wordsInDocs = dict() #lists of word ids indexed by doc id
+
     def __init__(self, db_conn, url_file):
         """Initialize the crawler with a connection to the database to populate
         and with the file containing the list of seed URLs to begin indexing."""
@@ -102,8 +108,8 @@ class crawler(object):
         ])
 
         # TODO remove me in real version
-        self._mock_next_doc_id = 1
-        self._mock_next_word_id = 1
+        self._mock_next_doc_id = 0
+        self._mock_next_word_id = 0
 
         # keep track of some info about the page we are currently parsing
         self._curr_depth = 0
@@ -146,7 +152,12 @@ class crawler(object):
         #       2) query the lexicon for the id assigned to this word, 
         #          store it in the word id cache, and return the id.
 
+	#add the word to the lexicon if it's not already there
         word_id = self._mock_insert_word(word)
+	if word not in self.lexicon:
+	    self.lexicon.insert(word_id, word)
+	
+	#add word id to cache
         self._word_id_cache[word] = word_id
         return word_id
     
@@ -159,7 +170,12 @@ class crawler(object):
         #       doesn't exist in the db then only insert the url and leave
         #       the rest to their defaults.
         
+	#add the doc to the lexicon if it's not already there
         doc_id = self._mock_insert_document(url)
+	if url not in self.docIndex:
+	    self.docIndex.insert(doc_id, url)
+
+	#add doc to cache
         self._doc_id_cache[url] = doc_id
         return doc_id
     
@@ -211,6 +227,10 @@ class crawler(object):
         # TODO: knowing self._curr_doc_id and the list of all words and their
         #       font sizes (in self._curr_words), add all the words into the
         #       database for this document
+	
+	#add list of words in current doc to doc id
+	self.wordsInDocs[self._curr_doc_id] = self._curr_words
+
         print "    num words="+ str(len(self._curr_words))
 
     def _increase_font_factor(self, factor):
@@ -290,12 +310,26 @@ class crawler(object):
             else:
                 self._add_text(tag)
 
-    def crawl(self, depth=2, timeout=3):
+    def get_inverted_index(self):
+	invIndex = dict()
+
+	for w in self._word_id_cache:
+	    for d in self.wordsInDocs:
+		if w in self.wordsInDocs[d]: #if a given word id is associated with a given doc id
+		    invIndex[w] = set()
+		    invIndex[w].add(d) #add the doc id to the set
+
+	self.invertedIndex = invIndex
+	return invIndex
+
+
+    def crawl(self, depth=0, timeout=3):
         """Crawl the web!"""
         seen = set()
+	
+	print(self._url_queue)
 
         while len(self._url_queue):
-
             url, depth_ = self._url_queue.pop()
 
             # skip this url; it's too deep
@@ -333,6 +367,6 @@ class crawler(object):
 
 if __name__ == "__main__":
     bot = crawler(None, "urls.txt")
-    bot.crawl(depth=1)
+    bot.crawl(depth=0)
 
 
