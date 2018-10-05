@@ -132,7 +132,6 @@ class crawler(object):
         and then returns that newly inserted document's id."""
         ret_id = self._mock_next_doc_id
         self._mock_next_doc_id += 1
-        print ret_id
         return ret_id
     
     # TODO remove me in real version
@@ -238,7 +237,7 @@ class crawler(object):
         #       font sizes (in self._curr_words), add all the words into the
         #       database for this document
 
-	    print"    num words="+ str(len(self._curr_words))
+	    print "    num words="+ str(len(self._curr_words))
 
     def _increase_font_factor(self, factor):
         """Increade/decrease the current font size."""
@@ -330,6 +329,20 @@ class crawler(object):
 	self.invertedIndex = invIndex
 	return invIndex
 
+    def get_resolved_inverted_index(self):
+        invIndex = dict()
+        res_invIndex = dict()
+        self.get_inverted_index()
+        invIndex=self.invertedIndex
+        #for key, value in invIndex.items():
+            #print key, value
+        for key,value in invIndex.items():
+          res_invIndex[self.lexicon[key]]=set()
+          x=self.lexicon[key]
+          for m in value:
+               res_invIndex[x].add(self.docIndex[m])
+        
+        return res_invIndex 
 
     def crawl(self, depth=0, timeout=3):
         """Crawl the web!"""
@@ -375,11 +388,16 @@ class crawler(object):
 
         #for testing purposes
         #print(self.docIndex)
-        print(self.lexicon)
+        #print(self.lexicon)
         #print(self.wordsInDocs)
-        self.get_inverted_index()
-        for key, value in self.invertedIndex.iteritems():
-            print key, value
+        #self.get_inverted_index()
+        
+        #for key, value in self.invertedIndex.iteritems():
+            #print key, value
+        
+        res=self.get_resolved_inverted_index()
+        for key, value in res.items():
+           print key, value
 
 if __name__ == "__main__":
     bot = crawler(None, "urls.txt")
