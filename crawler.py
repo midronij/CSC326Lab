@@ -46,7 +46,7 @@ class crawler(object):
     lexicon = list() #words indexed by id
     invertedIndex = dict() #lists of doc ids indexed by word id
 
-    wordsInDocs = dict() #lists of word ids indexed by doc id
+    wordsInDocs = dict() #lists of words indexed by doc id
 
     def __init__(self, db_conn, url_file):
         """Initialize the crawler with a connection to the database to populate
@@ -132,6 +132,7 @@ class crawler(object):
         and then returns that newly inserted document's id."""
         ret_id = self._mock_next_doc_id
         self._mock_next_doc_id += 1
+        print ret_id
         return ret_id
     
     # TODO remove me in real version
@@ -144,6 +145,10 @@ class crawler(object):
     
     def word_id(self, word):
         """Get the word id of some specific word."""
+        
+        #add the word to wordsInDocs for the current document
+        self.wordsInDocs[self._curr_doc_id].append(word)
+
         if word in self._word_id_cache:
             return self._word_id_cache[word]
         
@@ -152,12 +157,13 @@ class crawler(object):
         #       2) query the lexicon for the id assigned to this word, 
         #          store it in the word id cache, and return the id.
 
-	#add the word to the lexicon if it's not already there
+		#add the word to the lexicon if it's not already there
         word_id = self._mock_insert_word(word)
-	if word not in self.lexicon:
-	    self.lexicon.insert(word_id, word)
+		
+        if word not in self.lexicon:
+	        self.lexicon.insert(word_id, word)
 	
-	#add word id to cache
+		#add word id to cache
         self._word_id_cache[word] = word_id
         return word_id
     
@@ -170,12 +176,16 @@ class crawler(object):
         #       doesn't exist in the db then only insert the url and leave
         #       the rest to their defaults.
         
-	#add the doc to the lexicon if it's not already there
+	    #add the doc to the lexicon if it's not already there
         doc_id = self._mock_insert_document(url)
-	if url not in self.docIndex:
-	    self.docIndex.insert(doc_id, url)
 
-	#add doc to cache
+        if url not in self.docIndex:
+	        self.docIndex.insert(doc_id, url)
+
+        #create empty list of words in this document in wordsInDocs
+        self.wordsInDocs[doc_id] = list()
+
+	    #add doc to cache
         self._doc_id_cache[url] = doc_id
         return doc_id
     
@@ -227,11 +237,8 @@ class crawler(object):
         # TODO: knowing self._curr_doc_id and the list of all words and their
         #       font sizes (in self._curr_words), add all the words into the
         #       database for this document
-	
-	#add list of words in current doc to doc id
-	self.wordsInDocs[self._curr_doc_id] = self._curr_words
 
-        print "    num words="+ str(len(self._curr_words))
+	    print"    num words="+ str(len(self._curr_words))
 
     def _increase_font_factor(self, factor):
         """Increade/decrease the current font size."""
@@ -314,10 +321,11 @@ class crawler(object):
 	invIndex = dict()
 
 	for w in self._word_id_cache:
+            if self.lexicon.index(w) not in invIndex.keys(): #check if word id has been used as index yet, if not, create a new set of docs associated with it
+                invIndex[self.lexicon.index(w)] = set()
 	    for d in self.wordsInDocs:
 		if w in self.wordsInDocs[d]: #if a given word id is associated with a given doc id
-		    invIndex[w] = set()
-		    invIndex[w].add(d) #add the doc id to the set
+		    invIndex[self.lexicon.index(w)].add(d) #add the doc id to the set
 
 	self.invertedIndex = invIndex
 	return invIndex
@@ -327,7 +335,7 @@ class crawler(object):
         """Crawl the web!"""
         seen = set()
 	
-	print(self._url_queue)
+        print(self._url_queue)
 
         while len(self._url_queue):
             url, depth_ = self._url_queue.pop()
@@ -364,6 +372,14 @@ class crawler(object):
             finally:
                 if socket:
                     socket.close()
+
+        #for testing purposes
+        #print(self.docIndex)
+        print(self.lexicon)
+        #print(self.wordsInDocs)
+        self.get_inverted_index()
+        for key, value in self.invertedIndex.iteritems():
+            print key, value
 
 if __name__ == "__main__":
     bot = crawler(None, "urls.txt")
