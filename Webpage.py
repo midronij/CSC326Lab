@@ -1,6 +1,7 @@
-from bottle import route, run, get, post, request, template
+from bottle import route, run, get, post, request, response, template
 @get('/')
 def hello():
+   response.delete_cookie("keywords")
    return '''
 	<style><!--css stuff here-->
 	  .btn {
@@ -53,7 +54,7 @@ def hello():
 	<form id="form" method="post">
 	 <section id="hero"> 
 	 <h1>My Search engine</h1>
-	 <input name="phrase" id="phrase" placeholder="Enter your Phrase"/><br><br><input id="submit" type="submit" value="Search" class="btn"></input>
+	 <input name="keywords" id="keywords" type="text" placeholder="Enter your Phrase"/><br><br><input id="submit" type="submit" value="Search" class="btn"></input>
 	 </form>
 	 </section>
 	</html>
@@ -62,21 +63,70 @@ def hello():
 @post('/')
 def displayResults():
 
-	userInput = request.forms.get('phrase')
+        #results table
+	userInput = request.forms.get('keywords')
 
 	words = userInput.split()
-	dictionary = {}
+	dictionary = dict()
 
+        #count number of times each word was entered
 	for x in words:
-		if dictionary.has_key(x):
-			dictionary[x] += 1
-		else:
-			dictionary[x] = 1
+	    if dictionary.has_key(x):
+		dictionary[x] += 1
+	    else:
+		dictionary[x] = 1
 	
-	output = "<h2>Search Results</h2><table><tr><th>Word</th><th>Count</th><tr>"
+        #create results table
+	output = "<h2>Search Results</h2><table name=\"results\"><tr><th>Word</th><th>Count</th><tr>"
 	
+        #add a row to the results table for each word the user has entered
 	for key, value in dictionary.iteritems():
-		output += "<tr><td>" + key + "</td><td> &nbsp;&nbsp;&nbsp;&nbsp;" + str(value) + "</td></tr>"
+	    output += "<tr><td>" + key + "</td><td> &nbsp;&nbsp;&nbsp;&nbsp;" + str(value) + "</td></tr>"
+        
+        output += "</table>"
+
+        #top 20 keywords table
+        keywords = str()
+
+        if "keywords" not in request.cookies: #create the cookie if it doesn't already exist (stored as string of every word the user has entered
+            keywords = userInput + " "
+        else:
+            keywords = str(request.get_cookie("keywords")) + userInput + " "
+
+        response.set_cookie("keywords", keywords) #update the cookie with newly entered keywords
+        
+        keywords_split = keywords.split()
+        keywordsFreqs = dict()
+
+        for x in keywords_split:
+            if keywordsFreqs.has_key(x):
+                keywordsFreqs[x] += 1
+            else:
+                keywordsFreqs[x] = 1
+
+        #create history table
+        output += "<br><br><h2>Most Popular Keywords</h2><table name=\"history\"><tr><th>Word</th><th>Count</th><tr>"
+
+        #add a row to the history table for each word stored
+	counter = 0
+
+        for i in range(20):
+            if i > (len(keywordsFreqs) - 1):
+                break
+
+            maxIndex = str()
+            maxVal = 0
+
+            for key, value in keywordsFreqs.iteritems():
+                if value > maxVal:
+                    maxIndex = key
+                    maxVal = value
+
+            keywordsFreqs[maxIndex] = 0
+            output += "<tr><td>" + maxIndex + "</td><td> &nbsp;&nbsp;&nbsp;&nbsp;" + str(maxVal) + "</td></tr>"
+
+        output += "</table>"
 
 	return output
-run(host='localhost', port=8080, debug=True)
+
+run(host='localhost', port=8090, debug=True)

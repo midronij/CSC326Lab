@@ -1,0 +1,16 @@
+To run backend code using test cases:
+
+Method 1:
+1.) Open terminal/command line
+2.) Navigate to directory containing source code
+3.) Use the following command to run both test sites and crawler: "python crawler.py & python test.py & python test2.py"
+
+Method 2 (only use this if method 1 does not work!):
+1.) Open a terminal window
+2.) Navigate to the source code directory and run the first test site with: "python test.py"
+3.) Open another terminal window. DO NOT close the first one.
+4.) Navigate to the souce code directory and run the second test site with "python test2.py"
+5.) Open another terminal window. DO NOT close the other ones.
+6.) Navigate to the source code directory and run crawler with "python crawler.py"
+
+To run the frontend code, simple navigate to the source code directory and use "python Webpage.py"
