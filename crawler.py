@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 # Copyright (C) 2011 by Peter Goodman
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,7 +24,8 @@ import urlparse
 from BeautifulSoup import *
 from collections import defaultdict
 import re
-
+import sqlite3 as lite
+from sqlite3 import Error
 def attr(elem, attr):
     """An html attribute from an html element. E.g. <a href="">, then
     attr(elem, "href") will get the href or an empty string."""
@@ -47,6 +48,8 @@ class crawler(object):
     invertedIndex = dict() #lists of doc ids indexed by word id
 
     wordsInDocs = dict() #lists of words indexed by doc id
+    urlLinks = list() #list of ordered pairs (tuples) in the form ('from' docId, 'to' docId)
+    pageRanks = dict() #page rank indexed by document id
 
     def __init__(self, db_conn, url_file):
         """Initialize the crawler with a connection to the database to populate
@@ -156,13 +159,13 @@ class crawler(object):
         #       2) query the lexicon for the id assigned to this word, 
         #          store it in the word id cache, and return the id.
 
-		#add the word to the lexicon if it's not already there
+	#add the word to the lexicon if it's not already there
         word_id = self._mock_insert_word(word)
 		
         if word not in self.lexicon:
 	        self.lexicon.insert(word_id, word)
 	
-		#add word id to cache
+	#add word id to cache
         self._word_id_cache[word] = word_id
         return word_id
     
@@ -175,7 +178,7 @@ class crawler(object):
         #       doesn't exist in the db then only insert the url and leave
         #       the rest to their defaults.
         
-	    #add the doc to the lexicon if it's not already there
+	#add the doc to the lexicon if it's not already there
         doc_id = self._mock_insert_document(url)
 
         if url not in self.docIndex:
@@ -184,7 +187,7 @@ class crawler(object):
         #create empty list of words in this document in wordsInDocs
         self.wordsInDocs[doc_id] = list()
 
-	    #add doc to cache
+	#add doc to cache
         self._doc_id_cache[url] = doc_id
         return doc_id
     
@@ -229,6 +232,9 @@ class crawler(object):
         # add a link entry into the database from the current document to the
         # other document
         self.add_link(self._curr_doc_id, self.document_id(dest_url))
+
+        #add ordered pair (curr id, dest id) to the url graph
+        self.urlLinks.append((self._curr_doc_id, self.document_id(dest_url)))
 
         # TODO add title/alt/text to index for destination url
     
@@ -316,11 +322,60 @@ class crawler(object):
             else:
                 self._add_text(tag)
 
+    '''#populate the urlGraph structure and calculate all pageranks
+    def get_page_ranks(self, docID, depth):
+        #Step 1: Populate urlGraph structure
+
+        #find <a> tag on the current page
+        #follow it
+        #repeat this recursively, decreasing the depth with each call. when the depth is 0, return
+        #if any of the webpages listed in urls.txt are encountered, add them to all applicable docId's entries in urlGraph
+        #e.g.: if A->B->C, then C needs to be added to B with a depth of 1, and C needs to be added to A with a depth of 2
+
+        #Step 2: Calculate page rank
+        #For each key in urlGraph, count number of times each docID appears'''
+
+    
+    def page_rank(self, links, num_iterations=20, initial_pr=1.0):
+        from collections import defaultdict
+        import numpy as np
+
+        page_rank = defaultdict(lambda: float(initial_pr))
+        num_outgoing_links = defaultdict(float)
+        incoming_link_sets = defaultdict(set)
+        incoming_links = defaultdict(lambda: np.array([]))
+        damping_factor = 0.85
+
+        # collect the number of outbound links and the set of all incoming documents
+        # for every document
+
+        for (from_id,to_id) in links:
+            num_outgoing_links[int(from_id)] += 1.0
+            incoming_link_sets[to_id].add(int(from_id))
+    
+        # convert each set of incoming links into a numpy array
+        for doc_id in incoming_link_sets:
+            incoming_links[doc_id] = np.array([from_doc_id for from_doc_id in incoming_link_sets[doc_id]])
+
+        num_documents = float(len(num_outgoing_links))
+        lead = (1.0 - damping_factor) / num_documents
+        partial_PR = np.vectorize(lambda doc_id: page_rank[doc_id] / 1 if num_outgoing_links[doc_id] == 0 else (num_outgoing_links[doc_id]))
+
+        for _ in xrange(num_iterations):
+            for doc_id in num_outgoing_links:
+                tail = 0.0
+                if len(incoming_links[doc_id]):
+                    tail = damping_factor * partial_PR(incoming_links[doc_id]).sum()
+                page_rank[doc_id] = lead + tail
+    
+        return page_rank
+
     def get_inverted_index(self):
 	invIndex = dict()
 
 	for w in self._word_id_cache:
-            if self.lexicon.index(w) not in invIndex.keys(): #check if word id has been used as index yet, if not, create a new set of docs associated with it
+            #check if word id has been used as indexed yet, if not, create a new set of docs associated with it
+            if self.lexicon.index(w) not in invIndex.keys(): 
                 invIndex[self.lexicon.index(w)] = set()
 	    for d in self.wordsInDocs:
 		if w in self.wordsInDocs[d]: #if a given word id is associated with a given doc id
@@ -344,6 +399,27 @@ class crawler(object):
         
         return res_invIndex 
 
+    def add_to_database(self):
+        curr=lite.connect("C:\\sqlite\db5\pythonsqlite.db")  
+        cur=curr.cursor()  
+
+        #create table with document information (id, url, words, pagerank)
+        cur.execute("CREATE TABLE DocInfo (doc_id integer, url text, words text,pgrank real)")
+
+        for x in range(len(self.docIndex)):
+            newwords=' '.join(self.wordsInDocs[x])
+            cur.execute("INSERT INTO DocInfo VALUES('" + str(x) + "','" + self.docIndex[x] + "','" + newwords + "','" + str(self.pageRanks[x]) + "')")
+        
+        #create table with word information (id, word, documents)
+        cur.execute("CREATE TABLE WordInfo (word_id integer, word text, doc_containing_word text)")
+
+        for x in range(len(self.lexicon)):
+            docs = ' '.join(str(i) for i in self.invertedIndex[x])
+            cur.execute("INSERT INTO WordInfo VALUES('" + str(x) + "','" + self.lexicon[x] + "','" + docs + "')")
+        
+        curr.commit()
+        curr.close()
+
     def crawl(self, depth=0, timeout=3):
         """Crawl the web!"""
         seen = set()
@@ -363,7 +439,7 @@ class crawler(object):
             if doc_id in seen:
                 continue
 
-            seen.add(doc_id) # mark this document as haven't been visited
+            seen.add(doc_id) # mark this document as hasn't been visited
             
             socket = None
             try:
@@ -385,19 +461,33 @@ class crawler(object):
             finally:
                 if socket:
                     socket.close()
+        
+        #calculate page ranks
+        self.pageRanks = self.page_rank(self.urlLinks)
+
+        for i in range(len(self.docIndex)):
+            if i not in self.pageRanks.keys():
+                self.pageRanks[i] = 0
+
+        #create inverted index
+        self.get_inverted_index()
+
+        print self.urlLinks
+        print self.pageRanks
+
+        self.add_to_database()
 
         #for testing purposes
         #print(self.docIndex)
         #print(self.lexicon)
         #print(self.wordsInDocs)
-        #self.get_inverted_index()
         
         #for key, value in self.invertedIndex.iteritems():
             #print key, value
         
-        res=self.get_resolved_inverted_index()
-        for key, value in res.items():
-           print key, value
+        #res=self.get_resolved_inverted_index()
+        #for key, value in res.items():
+           #print key, value
 
 if __name__ == "__main__":
     bot = crawler(None, "urls.txt")
