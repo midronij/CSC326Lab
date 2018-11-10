@@ -42,40 +42,139 @@ def hello():
        bottle.redirect("http://localhost:8080/login")
 
    return '''
-	<style>
-	  .btn {
-                padding: 0 20px;
-                /* height: 40px; */
-                color:blue;
-                font-size: 1em;
-                font-weight: 900;
-                text-transform: uppercase;
-                /* border: 3px black solid; */
-                border-radius: 2px;
-                background: transparent;
-                cursor: pointer;
-               }
-
-          #hero {
-	         display: flex;
-	         flex-direction: column;
-	         align-items: center;
-                 justify-content: center;
-	         text-align: center;
-	         height: 200px;
-	         margin-top: 50px;
-                }
-        </style>
-
-        <section id="hero"> 
-	<form id="form" method="post">
-	    <h1>My Search engine</h1>
-	    <input name="keywords" id="keywords" type="text" placeholder="Enter your Phrase"/><br><br>
-            <input name="search" id="submit" type="submit" value="Search" class="btn"></input><br>
-	</form>
-        <a href="http://localhost:8080/login"><button id="login" type="button" class="btn">Log In</button></a>
-	</section>
-	</html>
+<html>
+<head>
+	<style>	
+	body {
+		background-image: linear-gradient(to top, #f4fdff, white);
+		background-repeat: no-repeat;
+		height: 100%;
+		overflow: hidden;
+		}
+	
+	.main {
+		position: absolute;
+		top: 45%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		text-align: center;
+		}
+	.search-box {
+		height: 30px;
+		border-radius: 40px;
+		padding: 10px;
+		border-style: solid;
+		border-color: #72e7ff;
+		background: white;
+		transition: 0.4s;
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		}
+				
+	.search-box:hover, .search-box:focus-within {
+		height: 40px;
+		background: #72e7ff;
+		box-shadow: none;
+		}
+	
+	.search-txt {
+		border: none;
+		background: none;
+		outline: none;
+		float: center;
+		text-align: center;
+		padding: 0;
+		color: #036c82;
+		font-size: 20px;
+		line-height: 40px;
+		width: 800px;
+		}
+			
+	#submit {
+		border: none;
+		background: white;
+		transition: 0.4s;
+		border-radius: 40px;
+		width: 200px;
+		line-height: 30px;
+		box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+		font-size: 16px;
+		}
+		
+	#submit:hover {
+		background: #72e7ff;
+		border-color: #72e7ff;
+		border-style: solid;
+		border-width: 5px;
+		box-shadow: none;
+		}
+	
+	.nav {
+		background: #72e7ff;
+		width: 100%;
+		height: 8%;
+		padding: 0;
+		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);
+		padding-top: 0.5%;
+		padding-right: 5%;
+		}
+		
+	#login {
+		border: none;
+		background: white;
+		transition: 0.4s;
+		border-radius: 40px;
+		height: 50px;
+		width: 150px;
+		line-height: 30px;
+		font-size: 16px;
+		float: right;
+		margin-bottom: 1%;
+		}
+		
+	#login:hover {
+		border-color: white;
+		border-style: solid;
+		border-width: 3px;
+		background: #72e7ff;
+		color: #036c82;
+		font-weight: bold;
+		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);
+		}
+		
+	#toptext {
+		float: left;
+		font-family: Trebuchet MS;
+		padding-left: 1%;
+		color: 036c82;
+		font-style: italic;
+		}
+		
+	#title {
+		color: #036c82;
+		font-family: Trebuchet MS;
+		font-size: 48px;
+		}
+	
+    </style>
+</head>
+<body>
+	<section id="hero">
+	<div class="nav">
+		<h2 id="toptext">You are not logged in.</h2>
+		<a href="http://localhost:8080/login"><button id="login" type="button" class="btn">Log In</button></a>
+	</div>
+	<div class="main">
+		<form id="form" method="post">
+			<h1 id="title">Search the web:</h1>
+			<div class="search-box">
+				<input name="keywords" id="keywords" type="text" placeholder="Enter your phrase..." class="search-txt"/>
+			</div>
+			<br><br><input name="search" id="submit" type="submit" value="Search" class="btn"></input><br>
+		</form>
+	</div>
+    </section>
+<body>
+</html>
 '''
 
 @get('/login')
@@ -118,65 +217,140 @@ def redirect_page():
     response.set_cookie("email", str(user_email)) #store user's email
 
     output = '''
-	<style><!--css stuff here-->
-	  .btn {
-	  padding: 0 20px;
-	  height: 40px;
-	  color:blue;
-	  font-size: 1em;
-	  font-weight: 900;
-	  text-transform: uppercase;
-	  border: 3px black solid;
-	  border-radius: 2px;
-	  background: transparent;
-	  cursor: pointer;
-	 
-		
-	}
-	#hero {
-	  display: flex;
-	  flex-direction: column;
-	  align-items: center;
-	  
-	  justify-content: center;
-	  text-align: center;
-	  height: 200px;
-	  margin-top: 50px;
-	  h2 {
-		margin-bottom: 20px;
-		word-wrap: break-word;
-	  }
-	  input[type="email"] {
-		max-width: 275px;
-		width: 100%;
-		padding: 5px;
-	  }
-	  input[type="submit"] {
-		max-width: 150px;
-		width: 100%;
-		height: 30px;
-		margin: 15px 0;
-		border: 0;
-		background-color: #f1c40f;
-		
-		&:hover {
-		  background-color: orange;
-		  transition: background-color 1s;
+<html>
+<head>
+	<style>	
+	body {
+		background-image: linear-gradient(to top, #f4fdff, white);
+		background-repeat: no-repeat;
+		height: 100%;
+		overflow: hidden;
 		}
-	  }
-	 </style><!--css stuff ends here-->'''
-    output += '''<h3>''' + user_email + '''</h3><br>'''
+	
+	.main {
+		position: absolute;
+		top: 45%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		text-align: center;
+		}
+	.search-box {
+		height: 30px;
+		border-radius: 40px;
+		padding: 10px;
+		border-style: solid;
+		border-color: #72e7ff;
+		background: white;
+		transition: 0.4s;
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		}
+				
+	.search-box:hover, .search-box:focus-within {
+		height: 40px;
+		background: #72e7ff;
+		box-shadow: none;
+		}
+	
+	.search-txt {
+		border: none;
+		background: none;
+		outline: none;
+		float: center;
+		text-align: center;
+		padding: 0;
+		color: #036c82;
+		font-size: 20px;
+		line-height: 40px;
+		width: 800px;
+		}
+			
+	#submit {
+		border: none;
+		background: white;
+		transition: 0.4s;
+		border-radius: 40px;
+		width: 200px;
+		line-height: 30px;
+		box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+		font-size: 16px;
+		}
+		
+	#submit:hover {
+		background: #72e7ff;
+		border-color: #72e7ff;
+		border-style: solid;
+		border-width: 5px;
+		box-shadow: none;
+		}
+	
+	.nav {
+		background: #72e7ff;
+		width: 100%;
+		height: 8%;
+		padding: 0;
+		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);
+		padding-top: 0.5%;
+		padding-right: 5%;
+		}
+		
+	#login {
+		border: none;
+		background: white;
+		transition: 0.4s;
+		border-radius: 40px;
+		height: 50px;
+		width: 150px;
+		line-height: 30px;
+		font-size: 16px;
+		float: right;
+		}
+		
+	#login:hover {
+		border-color: white;
+		border-style: solid;
+		border-width: 3px;
+		background: #72e7ff;
+		color: white;
+		font-weight: bold;
+		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);
+		}
+		
+	#toptext {
+		float: left;
+		font-family: Trebuchet MS;
+		padding-left: 1%;
+		color: #036c82;
+		font-style: italic;
+		}
+		
+	#title {
+		color: #036c82;
+		font-family: Trebuchet MS;
+		font-size: 48px;
+		}
+	
+    </style>
+</head>
+<body>
+	<section id="hero">
+	<div class="nav">'''
+    output += '''<h2 id="toptext">Welcome, ''' + user_email + '''.</h2>'''
     output += '''
-        <form id="form" method="post">
-	<section id="hero"> 
-	    <h1>My Search engine</h1>
-	    <input name="keywords" id="keywords" type="text" placeholder="Enter your Phrase"/><br><br><input name="search2" id="submit" type="submit" value="Search" class="btn"></input><br>
-	</form>
-        <a href="http://localhost:8080/logout"><button id="logout" type="button" class="btn">Log Out</button></a>
-	</section>
-	</html>
+<a href="http://localhost:8080/logout"><button id="login" type="button" class="btn">Log Out</button></a>
+	</div>
+	<div class="main">
+		<form id="form" method="post">
+			<h1 id="title">Search the web:</h1>
+			<div class="search-box">
+				<input name="keywords" id="keywords" type="text" placeholder="Enter your phrase..." class="search-txt"/>
+			</div>
+			<br><br><input name="search" id="submit" type="submit" value="Search" class="btn"></input><br>
+		</form>
+	</div>
+    </section>
+<body>
+</html>
 '''
-
     return output
 
 @get('/logout')
@@ -242,17 +416,6 @@ def displayResults():
     global page
     global results_per_page
 
-    output = str()
-
-    if len(docsSorted) > results_per_page:
-        output = multiPage(docsSorted, page, results_per_page)
-    else:
-        output = singlePage(docsSorted) 
-    #use post to increment page, display different stuff depending on page
-    return output
-
-def multiPage(docList, page=1, results_per_page=5):
-
     output = '''
             <head>
             <style>
@@ -272,9 +435,36 @@ def multiPage(docList, page=1, results_per_page=5):
                 padding: 8px 16px
                 text-decoration: none;
             }
+            #hero {
+	         display: flex;
+	         flex-direction: column;
+	         align-items: center;
+                 justify-content: center;
+	         text-align: center;
+	         height: 200px;
+	         margin-top: 50px;
+                }
             </style>
-            <head>
+            </head>
             <body>
+            <section id="hero"> 
+	    <form id="form" method="post">
+	        <h1>My Search engine</h1>
+	        <input name="keywords" id="keywords" type="text" placeholder="Enter your Phrase"/><br><br>
+                <input name="search" id="submit" type="submit" value="Search" class="btn"></input><br>
+	    </form>
+            </section>'''
+
+    if len(docsSorted) > results_per_page:
+        output += multiPage(docsSorted, page, results_per_page)
+    else:
+        output += singlePage(docsSorted) 
+    return output
+
+#use post to increment page, display different stuff depending on page
+def multiPage(docList, page=1, results_per_page=5):
+
+    output = '''
             <div class='pages'>
             <form id="switchPage" method="post">'''
 
@@ -284,7 +474,7 @@ def multiPage(docList, page=1, results_per_page=5):
     for i in range(results_per_page):
         output += "<ul><a href='" + docList[i + results_per_page * (page - 1)][0] + "'>" + docList[i + results_per_page * (page - 1)][0] + "</a></ul>"
 
-    output += "<input name='prev' type='submit' value='<<' class='btn'></input><input name='next' type='submit' value='>>' class='btn'></input></form></div>"
+    output += "<input name='prev' type='submit' value='<<' class='btn'></input><input name='next' type='submit' value='>>' class='btn'></input></form></div></body>"
 
     return output
 
@@ -292,7 +482,7 @@ def singlePage(docList):
     output = str()
 
     for i in range(len(docList)):
-        output += "<ul><a href='" + docList[i][0] + "'>" + docList[i][0] + "</a></ul>"
+        output += "<ul><a href='" + docList[i][0] + "'>" + docList[i][0] + "</a></ul></body>"
 
     return output
 
@@ -305,9 +495,8 @@ def changePage():
     elif request.POST.get('prev'):
         page -= 1
     else:
-        page = '''button clicked''' #user clicked on a page number
+        return getResults()
 
-    print "hello"
     return displayResults() 
         
     
