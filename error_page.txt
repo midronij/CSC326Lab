@@ -1,0 +1,47 @@
+ERROR PAGE
+
+#HTML STUFF BELOW
+
+
+<html>
+<div class="page">
+  <h1>404 </h1>
+  <h3>OOPS! something went wrong...</h3>
+</div>
+</html>
+
+
+
+
+
+
+
+#CSS STUFF BELOW
+
+
+
+html { 
+  background:  url(https://mir-s3-cdn-cf.behance.net/project_modules/disp/0efaf032676677.568ed0d61d000.gif) center center fixed; 
+  background-size: cover;
+	font-family: sans-serif;
+
+}
+h1{
+  font-size: 12em;
+  
+  color: rgba(0,255,255, 0.8);
+ 
+}
+h3{
+  font-size: 2em;
+ 
+  color: rgba(255,255,255, 0.7);
+	
+}
+div.page{
+  position:absolute;
+  top:20%;
+  margin-top:-8em;
+  width:90%;
+  text-align:left;
+}
