@@ -31,6 +31,7 @@ docsSorted = list() #list of urls in display order (highest to lowest pagerank)
 searchTerm = str()
 page = 1
 results_per_page = 5
+email = str()
 
 @get('/')
 def hello():
@@ -415,47 +416,201 @@ def displayResults():
     global docsSorted
     global page
     global results_per_page
+    global searchTerm
+    global user_logged_in
 
     output = '''
-            <head>
-            <style>
-            .btn {
-	        padding: 0 20px;
-	        height: 40px;
-	        color:blue;
-	        font-size: 1em;
-	        font-weight: 900;
-	        text-transform: uppercase;
-	        background: transparent;
-	        cursor: pointer;
-            }
-            .pages input {
-                color: black
-                float: center
-                padding: 8px 16px
-                text-decoration: none;
-            }
-            #hero {
-	         display: flex;
-	         flex-direction: column;
-	         align-items: center;
-                 justify-content: center;
-	         text-align: center;
-	         height: 200px;
-	         margin-top: 50px;
-                }
-            </style>
-            </head>
-            <body>
-            <section id="hero"> 
-	    <form id="form" method="post">
-	        <h1>My Search engine</h1>
-	        <input name="keywords" id="keywords" type="text" placeholder="Enter your Phrase"/><br><br>
-                <input name="search" id="submit" type="submit" value="Search" class="btn"></input><br>
-	    </form>
-            </section>'''
+<html>
+<head>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<style>	
+	body {
+		background-image: linear-gradient(to top, #f4fdff, white);
+		background-repeat: no-repeat;
+		height: 100%;
+		overflow: hidden;
+		}
+	
+	.main {
+		position: absolute;
+		top: 45%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		}
+		
+	.search-box {
+		height: 30px;
+		border-radius: 40px;
+		padding: 10px;
+		border-style: solid;
+		border-color: #72e7ff;
+		background: white;
+		transition: 0.4s;
+		float: left;
+		width: 20%;
+		padding-left: 1%;
+		}
+				
+	.search-box:hover, .search-box:focus-within {
+		background: #72e7ff;
+		box-shadow: none;
+		border-color: white;
+		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);
+		}
+	
+	.search-txt {
+		border: none;
+		background: none;
+		outline: none;
+		float: left;
+		text-align: left;
+		padding: 0;
+		color: #036c82;
+		font-size: 20px;
+		line-height: 40px;
+		width: 800px;
+		}
+			
+	#submit {
+		height: 50px;
+		width: 60px;
+		border: none;
+		background: white;
+		transition: 0.4s;
+		border-radius: 40px;
+		line-height: 30px;
+		font-size: 16px;
+		margin-left: 10px;
+		margin-top: 0.2%;
+		}
+		
+	#submit:hover {
+		background: #72e7ff;
+		border-color: #72e7ff;
+		border-style: solid;
+		border-width: 5px;
+		box-shadow: none;
+		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);
+		border-color: white;
+		border-width: 3px;
+		}
+	
+	.nav {
+		background: #72e7ff;
+		width: 100%;
+		height: 8%;
+		padding: 0;
+		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);
+		padding-top: 0.5%;
+		padding-right: 0.5%;
+		padding-left: 0.2%;
+		}
+		
+	#login {
+		border: none;
+		background: white;
+		transition: 0.4s;
+		border-radius: 40px;
+		height: 50px;
+		width: 150px;
+		line-height: 30px;
+		font-size: 16px;
+		float: right;
+		}
+		
+	#login:hover {
+		border-color: white;
+		border-style: solid;
+		border-width: 3px;
+		background: #72e7ff;
+		color: white;
+		font-weight: bold;
+		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);
+		}
+		
+	#toptext {
+		float: right;
+		font-family: Trebuchet MS;
+		margin-right: 1%;
+		color: #036c82;
+		font-style: italic;
+		
+		}
+	#title {
+		color: #036c82;
+		font-family: Trebuchet MS;
+		font-size: 48px;
+		}
+		
+	.results {
+		text-align: left;
+		border-color: #036c82;
+		border-style: solid;
+		border-width: 3px;
+		font-size: 20px;
+		font-family: Trebuchet MS;
+		background-color: white;
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		}
+		
+	ul {
+		padding-bottom: 20px;
+		color: #036c82;
+		}
+		
+	.pages {
+		position: absolute;
+		top: 85%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		}
+		
+	#prev, #next {
+		height: 50px;
+		width: 60px;
+		border: none;
+		background: white;
+		transition: 0.4s;
+		border-radius: 40px;
+		line-height: 30px;
+		font-size: 16px;
+		margin-left: 10px;
+		margin-top: 0.2%;
+		box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+		font-weight: bold;
+		}
+		
+	#prev:hover, #next:hover {
+		background: #72e7ff;
+		border-color: #72e7ff;
+		border-style: solid;
+		border-width: 5px;
+		box-shadow: none;
+		border-color: white;
+		border-width: 3px;
+		}
+	
+    </style>
+</head>
+<body>
+	<section id="hero">
+	<div class="nav">
+		<form id="form" method="post">
+			<div class="search-box">
+				<input name="keywords" id="keywords" type="text" placeholder="Search..." class="search-txt"/>
+			</div>
+			<input name="search" id="submit" type="submit" class="btn" value="Go"></input>'''
 
-    if len(docsSorted) > results_per_page:
+    if user_logged_in:
+        output+= '''<a href="http://localhost:8080/logout"><button id="login" type="button" class="btn">Log Out</button></a><h2 id="toptext">''' + str(request.get_cookie("email")) + '''</h2>'''
+    else:
+        output+= '''<a href="http://localhost:8080/login"><button id="login" type="button" class="btn">Log In</button></a>'''
+		
+    output += '''</form></div><div class="main"><h2 id="title">Results for "''' + searchTerm +'''":</h2>''';
+
+    if len(docsSorted) == 0:
+        output += '''<div class="results"><ul>No results found.</ul></div>'''
+    elif len(docsSorted) > results_per_page:
         output += multiPage(docsSorted, page, results_per_page)
     else:
         output += singlePage(docsSorted) 
@@ -464,9 +619,7 @@ def displayResults():
 #use post to increment page, display different stuff depending on page
 def multiPage(docList, page=1, results_per_page=5):
 
-    output = '''
-            <div class='pages'>
-            <form id="switchPage" method="post">'''
+    output = '''<div class="results">''';
 
     #for i in range(len(docList) / 1):
         #output += "<input name='pg" + str(i) + "' type='submit' value='" + str(i) + "class='btn'></input>"
@@ -474,15 +627,29 @@ def multiPage(docList, page=1, results_per_page=5):
     for i in range(results_per_page):
         output += "<ul><a href='" + docList[i + results_per_page * (page - 1)][0] + "'>" + docList[i + results_per_page * (page - 1)][0] + "</a></ul>"
 
-    output += "<input name='prev' type='submit' value='<<' class='btn'></input><input name='next' type='submit' value='>>' class='btn'></input></form></div></body>"
+    output += '''
+        </div>
+	</div>
+	<div class="pages">
+	<form id="switchPage" method="post">'''
+
+    if page > 1: #i.e.: not on the first page
+        output += '''<input name="prev" id="prev" type="submit" value="<<" class="btn"></input>'''
+		
+    if page * results_per_page < len(docList): #i.e.: not on last page
+        output += '''<input name="next" id="next" type="submit" value=">>" class="btn"></input>'''
+	
+    output += '''</form></div></section><body></html>'''
 
     return output
 
 def singlePage(docList):
-    output = str()
+    output = '''<div class="results">'''
 
     for i in range(len(docList)):
-        output += "<ul><a href='" + docList[i][0] + "'>" + docList[i][0] + "</a></ul></body>"
+        output += "<ul><a href='" + docList[i][0] + "'>" + docList[i][0] + "</a></ul>"
+
+    output += '''</div></div></section><body></html>'''
 
     return output
 
