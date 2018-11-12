@@ -1,7 +1,7 @@
 # coding: utf-8
 
 import bottle
-from bottle import route, run, get, post, request, response, template, app
+from bottle import route, run, get, post, request, response, template, app, error
 import httplib2
 from httplib2 import Http
 import requests
@@ -130,6 +130,7 @@ def hello():
 		font-size: 16px;
 		float: right;
 		margin-bottom: 1%;
+		margin-top: 0.5%;
 		}
 		
 	#login:hover {
@@ -144,7 +145,7 @@ def hello():
 		
 	#toptext {
 		float: left;
-		font-family: Trebuchet MS;
+		font-family: sans-serif;
 		padding-left: 1%;
 		color: 036c82;
 		font-style: italic;
@@ -152,7 +153,7 @@ def hello():
 		
 	#title {
 		color: #036c82;
-		font-family: Trebuchet MS;
+		font-family: sans-serif;
 		font-size: 48px;
 		}
 	
@@ -304,6 +305,7 @@ def redirect_page():
 		line-height: 30px;
 		font-size: 16px;
 		float: right;
+		margin-top: 0.5%;
 		}
 		
 	#login:hover {
@@ -318,7 +320,7 @@ def redirect_page():
 		
 	#toptext {
 		float: left;
-		font-family: Trebuchet MS;
+		font-family: sans-serif;
 		padding-left: 1%;
 		color: #036c82;
 		font-style: italic;
@@ -326,7 +328,7 @@ def redirect_page():
 		
 	#title {
 		color: #036c82;
-		font-family: Trebuchet MS;
+		font-family: sans-serif;
 		font-size: 48px;
 		}
 	
@@ -516,6 +518,7 @@ def displayResults():
 		line-height: 30px;
 		font-size: 16px;
 		float: right;
+		margin-top: 0.5%;
 		}
 		
 	#login:hover {
@@ -530,7 +533,7 @@ def displayResults():
 		
 	#toptext {
 		float: right;
-		font-family: Trebuchet MS;
+		font-family: sans-serif;
 		margin-right: 1%;
 		color: #036c82;
 		font-style: italic;
@@ -538,7 +541,7 @@ def displayResults():
 		}
 	#title {
 		color: #036c82;
-		font-family: Trebuchet MS;
+		font-family: sans-serif;
 		font-size: 48px;
 		}
 		
@@ -548,7 +551,7 @@ def displayResults():
 		border-style: solid;
 		border-width: 3px;
 		font-size: 20px;
-		font-family: Trebuchet MS;
+		font-family: sans-serif;
 		background-color: white;
 		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 		}
@@ -664,8 +667,52 @@ def changePage():
     else:
         return getResults()
 
-    return displayResults() 
-        
+    return displayResults()
+
+@error(404)
+def error404(error):
+    return '''
+<html>
+<head>
+<style>
+html { 
+  background:  url(https://mir-s3-cdn-cf.behance.net/project_modules/disp/0efaf032676677.568ed0d61d000.gif) center center fixed; 
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  font-family: sans-serif;
+
+}
+h1{
+  font-size: 12em;
+  
+  color: rgba(0,255,255, 0.8);
+ 
+}
+h3{
+  font-size: 2em;
+ 
+  color: rgba(255,255,255, 0.7);
+	
+}
+
+div.page{
+  position:absolute;
+  top:20%;
+  margin-top:-8em;
+  width:90%;
+  text-align:left;
+}
+</style>
+<head>
+<body>
+<div class="page">
+  <h4><a href="http://localhost:8080">Back to main page</a></h4>
+  <h1>404 </h1>
+  <h3>OOPS! something went wrong...</h3>
+</div>
+</body>
+</html>
+''' 
     
 bottle.run(app=app)
 run(host='localhost', port=8080, debug=True) #note: localhost:8080 is hardcoded into login/logout buttons (change this later if possible)
