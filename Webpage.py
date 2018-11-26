@@ -13,7 +13,8 @@ from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 import sqlite3 as lite
 from sqlite3 import Error
-
+import pygtrie as trie
+t = trie.StringTrie()
 session_opts = {
     'session.type': 'memory',
     'session.cookie_expires': 300,
@@ -32,13 +33,17 @@ searchTerm = str()
 page = 1
 results_per_page = 5
 email = str()
-
+interp = str() #calculate:, define:, etc.
+answer = 0.0
+flagset=True
 @get('/')
 def hello():
    global user_logged_in
    global URL
-   print URL
-
+   global flagset
+   if flagset:
+       flagset=False
+       setTrie()
    if user_logged_in:
        bottle.redirect("http://localhost:8080/login")
 
@@ -156,6 +161,49 @@ def hello():
 		font-family: sans-serif;
 		font-size: 48px;
 		}
+
+        #help {
+		background: white;
+		transition: 0.4s;
+		border-radius: 40px;
+		width: 50px;
+		line-height: 30px;
+		box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+		font-size: 16px;
+		border: none;
+	}
+	
+	#help:hover {
+		background: #72e7ff;
+		box-shadow: none;
+		}
+	
+	#help:hover ~ #tips{
+		visibility: visible;
+		}
+		
+	#tips {
+		visibility: hidden;
+		transition: 0.2s;
+		text-align: center;
+		color: #036c82;
+		font-family: sans-serif;
+		border-color: #72e7ff;
+		border-style: solid;
+		border-width: 3px;
+		background-color: white;
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		padding-left: 3%;
+		padding-right: 3%;
+		}
+		
+	h3 {
+		font-size: 24px;
+		}
+		
+	p {
+		font-size: 20px;
+		}
 	
     </style>
 </head>
@@ -166,7 +214,13 @@ def hello():
 		<a href="http://localhost:8080/login"><button id="login" type="button" class="btn">Log In</button></a>
 	</div>
 	<div class="main">
-		<form id="form" method="post">
+		<form id="form" method="post" autocomplete="off">
+            <button id="help" type="button" class="btn">?</button><br><br>
+			<div id="tips">
+				<h3>Search tips:</h3>
+				<p>To perform mathematical calculations, type "Calculate:" followed by the expression you want to calculate."</p>
+				<p>To get the definition of a word, type "Define:" followed by the word you want to know.</p>
+			</div>
 			<h1 id="title">Search the web:</h1>
 			<div class="search-box">
 				<input name="keywords" id="keywords" type="text" placeholder="Enter your phrase..." class="search-txt"/>
@@ -175,10 +229,24 @@ def hello():
 		</form>
 	</div>
     </section>
-<body>
+</body>
 </html>
 '''
 
+def setTrie():
+   curr = lite.connect("C:\\sqlite\db5\pythonsqlite.db")
+   cur = curr.cursor()
+   words = cur.execute("SELECT word FROM WordInfo").fetchall()
+   print str(words)
+   global t
+   for x in words:
+      word=x[0]
+      key = str()
+      for y in word:
+        key += y
+        t[key] = word
+        print key + '\n'
+   
 @get('/login')
 def login():
     global user_logged_in
@@ -186,8 +254,6 @@ def login():
 
     flow = flow_from_clientsecrets("client_secret.json", scope='https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email', redirect_uri="http://localhost:8080/redirect")
     uri = flow.step1_get_authorize_url()
-    print user_logged_in
-    print str(uri)
     bottle.redirect(str(uri))
 
 @get('/redirect')
@@ -331,6 +397,49 @@ def redirect_page():
 		font-family: sans-serif;
 		font-size: 48px;
 		}
+
+	#help {
+		background: white;
+		transition: 0.4s;
+		border-radius: 40px;
+		width: 50px;
+		line-height: 30px;
+		box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+		font-size: 16px;
+		border: none;
+	}
+	
+	#help:hover {
+		background: #72e7ff;
+		box-shadow: none;
+		}
+	
+	#help:hover ~ #tips{
+		visibility: visible;
+		}
+		
+	#tips {
+		visibility: hidden;
+		transition: 0.2s;
+		text-align: center;
+		color: #036c82;
+		font-family: sans-serif;
+		border-color: #72e7ff;
+		border-style: solid;
+		border-width: 3px;
+		background-color: white;
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		padding-left: 3%;
+		padding-right: 3%;
+		}
+		
+	h3 {
+		font-size: 24px;
+		}
+		
+	p {
+		font-size: 20px;
+		}
 	
     </style>
 </head>
@@ -348,6 +457,12 @@ def redirect_page():
 				<input name="keywords" id="keywords" type="text" placeholder="Enter your phrase..." class="search-txt"/>
 			</div>
 			<br><br><input name="search" id="submit" type="submit" value="Search" class="btn"></input><br>
+			<button id="help" type="button" class="btn">?</button><br><br>
+			<div id="tips">
+				<h3>Search tips:</h3>
+				<p>To perform mathematical calculations, type "Calculate:" followed by the expression you want to calculate."</p>
+				<p>To get the definition of a word, type "Define:" followed by the word you want to know.</p>
+			</div>
 		</form>
 	</div>
     </section>
@@ -373,38 +488,80 @@ def logout():
 @post('/')
 def getResults():
     print request.POST.get('search')
+    global interp
+    global answer #used for answer to mathematical expression or definition of given word
 
-    #search through database for all URLs with first keyword entered by user
     global searchTerm
     global page
     page = 1 #reset to first page of results
 
     #get user input
-    userInput = request.forms.get('keywords')
-    userInput = userInput.split()
-    searchTerm = userInput[0]
+    userInput = request.hhhhhhhhhhhhhhhhhhhhhhhhhhhforms.get('keywords')
 
-    #search for search term in database, return list of all urls that contain the search term   
-    curr=lite.connect("C:\\sqlite\db5\pythonsqlite.db")
-    cur=curr.cursor()
+    #check for special keyswords ('calculate', 'define', etc)
+    if (userInput.lower()).startswith("calculate:"):
+        interp = "calc"
+        expression = (userInput.lower()).replace('calculate:', '')
+        searchTerm = expression + ' ='   
+        answer = eval(expression)
 
-    docIdsFromDB = cur.execute("SELECT doc_containing_word FROM WordInfo WHERE word='" + searchTerm + "'") #gets docs containing word
-    docIds = ' '.join(c for c in str(docIdsFromDB.fetchone()) if c.isdigit())
+    elif (userInput.lower()).startswith("define:"):
+        interp = "def"
+        searchTerm = ((userInput.lower()).replace('define:','')).lstrip() #remove "define" keyword and any leading whitespace
+        answer = list()
 
-    docsAndRanks = list()
+        #search the dictionary for the given word
+        curr = lite.connect("Dictionary.db")
+        cur = curr.cursor()
 
-    for x in docIds.split():
-        docInfoFromDB = cur.execute("SELECT url, pgrank FROM DocInfo WHERE doc_id='" + str(x) + "'").fetchone()
-        url = docInfoFromDB[0]
-        pageRank = docInfoFromDB[1]
+        #get word type (i.e.: adjective, noun, verb, etc.)        
+        wordTypesFromDB = cur.execute("SELECT wordtype FROM entries WHERE word='" + searchTerm.capitalize() + "'")
+        wordTypes = wordTypesFromDB.fetchall()
 
-        pair = (url, pageRank)
-        docsAndRanks.append(pair)
+        #get definition
+        definitionsFromDB = cur.execute("SELECT definition FROM entries WHERE word='" + searchTerm.capitalize() + "'")
+        definitions = definitionsFromDB.fetchall()
 
-    #sort urls by pagerank
-    global docsSorted
-    docsSorted = sorted(docsAndRanks, key=lambda x: x[1], reverse = True)
-    print docsSorted
+        for i in range(len(definitions)):
+            answer.append(str(wordTypes[i][0]) + ": " + str(definitions[i][0]).replace('\n', ''))
+
+        if not answer: #i.e.: word is not in dictionary
+            answer.append("No definition found.")
+
+    else:
+        interp = ""
+        #search through database for all URLs with first keyword entered by user
+        userInput = userInput.split()
+        searchTerm = userInput[0]
+
+        #search for search term in database, return list of all urls that contain the search term   
+        curr = lite.connect("C:\\sqlite\db5\pythonsqlite.db")
+        cur = curr.cursor()
+
+        docIdsFromDB = cur.execute("SELECT doc_containing_word FROM WordInfo WHERE word='" + searchTerm + "'") #gets docs containing word    
+
+        dbOutput = str(docIdsFromDB.fetchone())
+        docIds = str()
+        for i in range(len(dbOutput)):
+            if dbOutput[i].isdigit() or dbOutput[i] == ' ':
+                docIds += dbOutput[i]
+    
+        #docIds = ' '.join(c for c in str(docIdsFromDB.fetchone()) if c.isdigit() and not c.next().isdigit())
+        print docIds
+
+        docsAndRanks = set()
+
+        for x in docIds.split():
+            docInfoFromDB = cur.execute("SELECT url, pgrank FROM DocInfo WHERE doc_id='" + str(x) + "'").fetchone()
+            url = docInfoFromDB[0]
+            pageRank = docInfoFromDB[1]
+            pair = (url, pageRank)
+            docsAndRanks.add(pair)
+
+        #sort urls by pagerank
+        global docsSorted
+        docsSorted = sorted(list(docsAndRanks), key=lambda x: x[1], reverse = True)
+        print docsSorted
 
     #display results
     bottle.redirect("http://localhost:8080/results")
@@ -420,6 +577,7 @@ def displayResults():
     global results_per_page
     global searchTerm
     global user_logged_in
+    global answer
 
     output = '''
 <html>
@@ -545,8 +703,7 @@ def displayResults():
 		font-size: 48px;
 		}
 		
-	.results {
-		text-align: left;
+	.results, .results2 {
 		border-color: #036c82;
 		border-style: solid;
 		border-width: 3px;
@@ -554,6 +711,14 @@ def displayResults():
 		font-family: sans-serif;
 		background-color: white;
 		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		}
+
+	.results {
+		text-align: left;
+		}
+
+	.results2 {
+		text-align: center;
 		}
 		
 	ul {
@@ -592,6 +757,17 @@ def displayResults():
 		border-color: white;
 		border-width: 3px;
 		}
+     
+        #answer {
+		color: #036c82;
+                font-size: 40px;
+                }
+
+        #def {
+		color: #036c82;
+		font-size: 20px;
+		margin-left: 5%;
+		}
 	
     </style>
 </head>
@@ -608,19 +784,32 @@ def displayResults():
         output+= '''<a href="http://localhost:8080/logout"><button id="login" type="button" class="btn">Log Out</button></a><h2 id="toptext">''' + str(request.get_cookie("email")) + '''</h2>'''
     else:
         output+= '''<a href="http://localhost:8080/login"><button id="login" type="button" class="btn">Log In</button></a>'''
-		
-    output += '''</form></div><div class="main"><h2 id="title">Results for "''' + searchTerm +'''":</h2>''';
 
-    if len(docsSorted) == 0:
-        output += '''<div class="results"><ul>No results found.</ul></div>'''
-    elif len(docsSorted) > results_per_page:
-        output += multiPage(docsSorted, page, results_per_page)
+    if interp == "calc":
+        output += '''</form></div><div class="main"><h2 id="title">''' + searchTerm + '''</h2>
+                     <div class="results2"><h2 id="answer">''' + str(answer) + '''</h2></div></div></section><body></html>'''
+    elif interp == "def":
+        if len(answer) <= 1:
+            output += '''</form></div><div class="main"><h2 id="title">Definition for "''' + searchTerm + '''":</h2>
+                         <div class="results"><h2 id="def">''' + answer[0] + '''</h2></div></div></section><body></html>'''
+        else:
+            output += '''</form></div><div class="main"><h2 id="title">Definition for "''' + searchTerm +'''":</h2>''';
+            output += multiPage(answer, page, 1) #display one definition per page
     else:
-        output += singlePage(docsSorted) 
+        output += '''</form></div><div class="main"><h2 id="title">Results for "''' + searchTerm +'''":</h2>''';
+
+        if len(docsSorted) == 0:
+            output += '''<div class="results"><ul>No results found.</ul></div>'''
+        elif len(docsSorted) > results_per_page:
+            output += multiPage(docsSorted, page, results_per_page)
+        else:
+            output += singlePage(docsSorted) 
+
     return output
 
 #use post to increment page, display different stuff depending on page
 def multiPage(docList, page=1, results_per_page=5):
+    global interp
 
     output = '''<div class="results">''';
 
@@ -628,7 +817,11 @@ def multiPage(docList, page=1, results_per_page=5):
         #output += "<input name='pg" + str(i) + "' type='submit' value='" + str(i) + "class='btn'></input>"
 
     for i in range(results_per_page):
-        output += "<ul><a href='" + docList[i + results_per_page * (page - 1)][0] + "'>" + docList[i + results_per_page * (page - 1)][0] + "</a></ul>"
+        if (results_per_page * page + i <= len(docList)):
+           if interp == "def":
+               output += '''<h2 id="def">''' + docList[i + results_per_page * (page - 1)] + '''</h2>'''
+           else:
+               output += "<ul><a href='" + docList[i + results_per_page * (page - 1)][0] + "'>" + docList[i + results_per_page * (page - 1)][0] + "</a></ul>"
 
     output += '''
         </div>
@@ -639,7 +832,7 @@ def multiPage(docList, page=1, results_per_page=5):
     if page > 1: #i.e.: not on the first page
         output += '''<input name="prev" id="prev" type="submit" value="<<" class="btn"></input>'''
 		
-    if page * results_per_page < len(docList): #i.e.: not on last page
+    if (page + 1) * results_per_page < len(docList): #i.e.: not on last page
         output += '''<input name="next" id="next" type="submit" value=">>" class="btn"></input>'''
 	
     output += '''</form></div></section><body></html>'''
@@ -707,12 +900,11 @@ div.page{
 <body>
 <div class="page">
   <h4><a href="http://localhost:8080">Back to main page</a></h4>
-  <h1>404 </h1>
   <h3>OOPS! something went wrong...</h3>
 </div>
 </body>
 </html>
 ''' 
     
-bottle.run(app=app)
+#bottle.run(app=app)
 run(host='localhost', port=8080, debug=True) #note: localhost:8080 is hardcoded into login/logout buttons (change this later if possible)
