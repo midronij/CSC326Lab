@@ -50,6 +50,7 @@ class crawler(object):
     wordsInDocs = dict() #lists of words indexed by doc id
     urlLinks = list() #list of ordered pairs (tuples) in the form ('from' docId, 'to' docId)
     pageRanks = dict() #page rank indexed by document id
+    docsAndImgs = dict() #image links indexed by doc ids
 
     def __init__(self, db_conn, url_file):
         """Initialize the crawler with a connection to the database to populate
@@ -64,6 +65,7 @@ class crawler(object):
 
         # add a link to our graph, and indexing info to the related page
         self._enter['a'] = self._visit_a
+	self._enter['img'] = self._visit_img
 
         # record the currently indexed document's title an increase
         # the font size
@@ -184,8 +186,9 @@ class crawler(object):
         if url not in self.docIndex:
 	        self.docIndex.insert(doc_id, url)
 
-        #create empty list of words in this document in wordsInDocs
+        #create empty lists of words and images in this document in wordsInDocs
         self.wordsInDocs[doc_id] = list()
+        self.docsAndImgs[doc_id] = list()
 
 	#add doc to cache
         self._doc_id_cache[url] = doc_id
@@ -237,6 +240,10 @@ class crawler(object):
         self.urlLinks.append((self._curr_doc_id, self.document_id(dest_url)))
 
         # TODO add title/alt/text to index for destination url
+
+    def _visit_img(self, elem):
+        """Called when visiting <img> tags"""
+        self.docsAndImgs[self._curr_doc_id].append(self._fix_url(self._curr_url, attr(elem,"src")))
     
     def _add_words_to_document(self):
         # TODO: knowing self._curr_doc_id and the list of all words and their
@@ -400,15 +407,21 @@ class crawler(object):
         return res_invIndex 
 
     def add_to_database(self):
-        curr=lite.connect("C:\\sqlite\db5\pythonsqlite.db")  
-        cur=curr.cursor()  
+        curr=lite.connect("pythonsqlite.db")  
+        cur=curr.cursor()
 
-        #create table with document information (id, url, words, pagerank)
-        cur.execute("CREATE TABLE DocInfo (doc_id integer, url text, words text,pgrank real)")
+        #delete currently existing tables
+        cur.execute("DROP TABLE IF EXISTS DocInfo")
+        cur.execute("DROP TABLE IF EXISTS WordInfo")
+
+        #create table with document information (id, url, words, images, pagerank)
+        cur.execute("CREATE TABLE DocInfo (doc_id integer, url text, words text, images text, pgrank real)")
 
         for x in range(len(self.docIndex)):
-            newwords=' '.join(self.wordsInDocs[x])
-            cur.execute("INSERT INTO DocInfo VALUES('" + str(x) + "','" + self.docIndex[x] + "','" + newwords + "','" + str(self.pageRanks[x]) + "')")
+            if "http://" in self.docIndex[x] or "https://" in self.docIndex[x]:
+                newwords=' '.join(self.wordsInDocs[x])
+                imgs = ' '.join(self.docsAndImgs[x])
+                cur.execute("INSERT INTO DocInfo VALUES('" + str(x) + "','" + self.docIndex[x] + "','" + newwords + "','" + imgs + "','" + str(self.pageRanks[x]) + "')")
         
         #create table with word information (id, word, documents)
         cur.execute("CREATE TABLE WordInfo (word_id integer, word text, doc_containing_word text)")
@@ -472,12 +485,12 @@ class crawler(object):
         #create inverted index
         self.get_inverted_index()
 
-        print self.urlLinks
-        print self.pageRanks
+	#for testing purposes
+        #print self.urlLinks
+        #print self.pageRanks
 
         self.add_to_database()
 
-        #for testing purposes
         #print(self.docIndex)
         #print(self.lexicon)
         #print(self.wordsInDocs)
@@ -488,9 +501,10 @@ class crawler(object):
         #res=self.get_resolved_inverted_index()
         #for key, value in res.items():
            #print key, value
+        print self.docsAndImgs
 
 if __name__ == "__main__":
     bot = crawler(None, "urls.txt")
-    bot.crawl(depth=0)
+    bot.crawl(depth=1)
 
 
