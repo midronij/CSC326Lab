@@ -286,7 +286,7 @@ def hello():
 
 
 def setTrie():
-   curr = lite.connect("C:\\sqlite\db5\pythonsqlite.db")
+   curr = lite.connect("pythonsqlite.db")
    cur = curr.cursor()
    words = cur.execute("SELECT word FROM WordInfo").fetchall()
    global t
@@ -616,7 +616,7 @@ def getResults():
         searchTerm = userInput[0]
 
         #search for search term in database, return list of all urls that contain the search term   
-        curr = lite.connect("C:\\sqlite\db5\pythonsqlite.db")
+        curr = lite.connect("pythonsqlite.db")
         cur = curr.cursor()
 
         docIdsFromDB = cur.execute("SELECT doc_containing_word FROM WordInfo WHERE word='" + searchTerm + "'") #gets docs containing word    

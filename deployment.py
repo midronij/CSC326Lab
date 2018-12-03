@@ -29,44 +29,45 @@ def run():
     elastic_IP = conn.allocate_address()
     elastic_IP.associate(inst_id)
 
-    return elastic_IP
+    return (str(elastic_IP)).replace("Address:", "")
 
 def deploy(elastic_IP):
     #copy over files
     os.system("scp -o StrictHostKeyChecking=no -i key.pem CSC326Project.tar.gz ubuntu@" + elastic_IP + ":~/")
     os.system("scp -o StrictHostKeyChecking=no -i key.pem pythonsqlite.db ubuntu@" + elastic_IP + ":~/")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP) #access instance
+    #os.system("ssh -i key.pem ubuntu@" + elastic_IP) #access instance
 
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " tar xvzf CSC326Project.tar.gz")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " cp pythonsqlite.db CSC326Project")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " cd CSC326Project")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " sudo apt-get update -y")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " sudo apt-get install python-pip -y")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " tar xvzf CSC326Project.tar.gz")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " cp pythonsqlite.db CSC326Project")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " cd CSC326Project")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " sudo apt-get update -y")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " sudo apt-get install python-pip -y")
 
     #install python packages needed
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " sudo pip install bottle")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " sudo pip install google-api-python-client")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " sudo pip install oauth2client")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " sudo pip install credentials")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " sudo pip install beaker")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " sudo pip install bottle")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " sudo pip install google-api-python-client")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " sudo pip install oauth2client")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " sudo pip install credentials")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " sudo pip install beaker")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " sudo pip install pygtrie")
 
     #start tmux session and run website
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " -t tmux new-session -d -s s0")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " -t tmux detach -s s0")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " -t tmux send -t s0 cd SPACE CSC326Project ENTER")
-    os.system("ssh -i key.pem ubuntu@" + elastic_IP + " -t tmux send -t s0 sudo SPACE python SPACE WebpageRemote.py ENTER")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " -t tmux new-session -d -s s0")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " -t tmux detach -s s0")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " -t tmux send -t s0 cd SPACE CSC326Project ENTER")
+    os.system("ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@" + elastic_IP + " -t tmux send -t s0 sudo SPACE python SPACE WebpageRemote.py ENTER")
 
 if __name__ == "__main__":
 
     #get website info
-    bot = crawler(None, "urls.txt")
-    bot.crawl(depth=1)
+    #bot = crawler(None, "urls.txt")
+    #bot.crawl(depth=1)
 
     #create AWS instance
     elastic_IP = run()
 
     #copy over files and deploy website
-    deploy(elastic_IP)
+    #deploy(elastic_IP)
 
     print "Access the search engine via: " + str(elastic_IP)
     

@@ -1,6 +1,7 @@
 import boto3
 import boto.ec2
 import os
+import time
 
 def terminate(elastic_IP):
     global allocation_id
@@ -21,13 +22,19 @@ def terminate(elastic_IP):
     ec2.release_address(AllocationId=alloc_id)
     conn.terminate_instances(instance_ids=[inst_id,])
 
+    while instances[0].update() != "terminated": #wait until the instance has been terminated
+        time.sleep(5)
+
+    ec2.delete_security_group(GroupName='csc326-group23')
+    ec2.delete_key_pair(KeyName='key')
+
 if __name__ == "__main__":
     elastic_IP = raw_input("Enter the public IP address of the instance to terminate:\n")
-
+    terminate(elastic_IP)
     #terminate the instance and release the elastic IP
-    try:
-        terminate(elastic_IP)
-    except:
-        print "Instance termination failed. Please email jackie.midroni@mail.utoronto.ca ASAP so that she can make sure she doesn't get charged by Amazon."
-    else:
-        print "Successfully terminated"
+    #try:
+        #terminate(elastic_IP)
+    #except:
+        #print "Instance termination failed. Please email jackie.midroni@mail.utoronto.ca ASAP so that she can make sure she doesn't get charged by Amazon."
+    #else:
+        #print "Successfully terminated"
